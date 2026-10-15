@@ -92,6 +92,24 @@ const kinds: { kind: Kind; title: string; id: string; body: string[] }[] = [
     </div>
   </section>
 
+  <section class="section" id="profiles" aria-labelledby="profiles-h">
+    <div class="wrap two-col">
+      <div class="section-head">
+        <h2 id="profiles-h">Choose a profile during setup</h2>
+        <p>
+          AgentUX keeps one signed base image and lets the installation role decide what to activate. Profile selection is
+          recorded during installation, then applied visibly and idempotently on first boot.
+        </p>
+      </div>
+      <div class="note muted">
+        <strong>Available roles</strong>
+        <p><code>workstation</code> · <code>node</code> · <code>command</code> · <code>executive</code> · <code>complete</code></p>
+        <p>Server dependencies stay containerized; an executive viewer does not install a local Command database or runtime.</p>
+        <a href="https://github.com/agentux-os/agentux/blob/main/docs/adr/0014-installation-profiles-and-platform-services.md">Read the profile decision</a>
+      </div>
+    </div>
+  </section>
+
   <section class="section" id="verify" aria-labelledby="verify-h">
     <div class="wrap two-col">
       <div class="section-head">
