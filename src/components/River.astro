@@ -1,0 +1,141 @@
+---
+// The hero art: each vendor CLI is a line of water that runs into the
+// penguin's wake. The mark itself is the brand file, untouched.
+const W = 1200;
+const H = 420;
+const lanes = [
+  { cmd: 'claude', name: 'Claude Code', y0: 268 },
+  { cmd: 'codex', name: 'Codex', y0: 314 },
+  { cmd: 'opencode', name: 'OpenCode', y0: 360 },
+  { cmd: 'agy', name: 'Antigravity CLI', y0: 406 },
+];
+// Points where the lanes meet the wake of the mark (placed at x=640, y=40, 540 x 190).
+const ends = [98, 116, 134, 152];
+const path = (y0: number, y1: number) => {
+  const mid = (y0 + y1) / 2;
+  return `M0 ${y0} C 340 ${y0 + 2} 440 ${mid + 40} 550 ${mid - 6} S 650 ${y1 + 2} 700 ${y1}`;
+};
+---
+<div class="river" role="img" aria-label="Four lines of water, one for each agent CLI (Claude Code, Codex, OpenCode, Antigravity CLI), flowing into the wake of the AgentUX penguin.">
+  <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+    <defs>
+      <linearGradient id="lane-fade" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="700" y2="0">
+        <stop offset="0" stop-color="currentColor" stop-opacity="0.18" />
+        <stop offset="0.7" stop-color="currentColor" stop-opacity="0.42" />
+        <stop offset="1" stop-color="currentColor" stop-opacity="0" />
+      </linearGradient>
+    </defs>
+    <g class="lanes" fill="none" stroke="url(#lane-fade)" stroke-width="2.2" stroke-linecap="round">
+      {lanes.map((l, i) => <path class="lane" style={`--i:${i}`} d={path(l.y0, ends[i])} pathLength="1" />)}
+    </g>
+    <image class="mark mark-dark penguin" href="/brand/mark-lime.svg" x="640" y="40" width="540" height="190" />
+    <image class="mark mark-light penguin" href="/brand/mark-moss.svg" x="640" y="40" width="540" height="190" />
+  </svg>
+  <ul class="lane-labels" aria-hidden="true">
+    {lanes.map((l, i) => (
+      <li style={`top:${((l.y0 - 26) / H) * 100}%; --i:${i}`}>
+        <code>{l.cmd}</code>
+      </li>
+    ))}
+  </ul>
+</div>
+
+<style>
+  .river {
+    position: relative;
+    color: var(--accent);
+    width: 100%;
+    max-width: 76rem;
+    margin-inline: auto;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  /* SVG <image> elements cannot use the global display toggle reliably. */
+  .mark-light {
+    display: none;
+  }
+
+  :global(:root[data-theme='light']) .mark-dark {
+    display: none;
+  }
+
+  :global(:root[data-theme='light']) .mark-light {
+    display: inline;
+  }
+
+  .lane-labels {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .lane-labels li {
+    position: absolute;
+    left: 0;
+    font-size: clamp(0.68rem, 1.1vw, 0.85rem);
+    color: var(--muted);
+    line-height: 1;
+  }
+
+  .lane-labels code {
+    font-size: 1em;
+  }
+
+  /* Too small to label each lane on a phone; the lanes alone carry the picture. */
+  @media (max-width: 40rem) {
+    .lane-labels {
+      display: none;
+    }
+  }
+
+  /* One load moment: the lanes run in, then the penguin arrives. */
+  @media (prefers-reduced-motion: no-preference) {
+    .lane {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      animation: run-in 1.3s cubic-bezier(0.3, 0.6, 0.2, 1) forwards;
+      animation-delay: calc(var(--i) * 0.12s);
+    }
+
+    .lane-labels li {
+      opacity: 0;
+      animation: fade 0.6s ease-out forwards;
+      animation-delay: calc(var(--i) * 0.12s);
+    }
+
+    .penguin {
+      opacity: 0;
+      transform: translateX(-24px);
+      transform-box: fill-box;
+      animation: arrive 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.75s forwards;
+    }
+  }
+
+  @keyframes run-in {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes fade {
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes arrive {
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>

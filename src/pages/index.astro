@@ -1,0 +1,624 @@
+---
+import Base from '../layouts/Base.astro';
+import River from '../components/River.astro';
+
+const gh = 'https://github.com/agentux-os';
+const docs = `${gh}/agentux/blob/main/docs`;
+const adr = (n: string) => `${gh}/agentux/blob/main/docs/adr/${n}`;
+---
+<Base
+  title="AgentUX: the Linux distribution for coding agents"
+  description="AgentUX is a Linux distribution where every coding agent works as one team: Claude Code, Codex, OpenCode and Antigravity CLI behind one cockpit, talking over an agent bus, from issue to reviewed pull request."
+  path="/"
+>
+  <section class="hero">
+    <div class="wrap hero-copy">
+      <h1>The Linux distribution where every coding agent works as one team.</h1>
+      <p class="lead">
+        AgentUX ships Claude Code, Codex, OpenCode and Antigravity CLI already installed and wired together on an
+        immutable Fedora base: one cockpit over all of them, an agent bus so they can talk to each other, and an
+        orchestrator that takes an issue to a reviewed pull request.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="/download/">Download</a>
+        <a class="btn" href="/download/#live">Try the live ISO</a>
+      </div>
+      <p class="status">
+        Pre-release. Fedora Kinoite 44 with bootc, signed images, x86_64 and aarch64.
+        <a href="#status">What is tested so far</a>
+      </p>
+    </div>
+    <div class="wrap hero-art">
+      <River />
+    </div>
+  </section>
+
+  <section class="section" id="what" aria-labelledby="what-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="what-h">Bring every agent you already pay for</h2>
+        <p>
+          Running agents in parallel worktrees is solved. Getting agents from different vendors to work on the same task,
+          and keeping track of them, is not. AgentUX does that part, and leaves inference with the providers: your own logins
+          and API keys, no GPU required.
+        </p>
+      </div>
+      <dl class="pillars">
+        <div>
+          <dt>One interface for every vendor</dt>
+          <dd>
+            Sessions, diffs and permission requests from any harness look the same in the cockpit, and land in one approvals
+            inbox. The vendor's own TUI is always one key away.
+          </dd>
+        </div>
+        <div>
+          <dt>Agents that talk to each other</dt>
+          <dd>
+            An implementer can ask a reviewer from another vendor to check its diff, hand off a task, or escalate a decision to
+            you, through a mediated bus where every message is logged.
+          </dd>
+        </div>
+        <div>
+          <dt>From issue to reviewed pull request</dt>
+          <dd>
+            The pipeline (plan, implement, test, review, open the PR) is declared in <code>agentux.yaml</code> and versioned
+            with your repository. You are asked only for the decisions that are yours.
+          </dd>
+        </div>
+        <div>
+          <dt>A system agents cannot break</dt>
+          <dd>
+            An immutable, image-based OS with one-step rollback. Every task runs in its own git worktree, and gate checks can
+            run in rootless Podman.
+          </dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="section" id="screenshots" aria-labelledby="shots-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="shots-h">What it looks like</h2>
+        <p>Captured by CI from the real images booted in QEMU. The runs on screen use fake agents, so nothing is billed.</p>
+      </div>
+      <figure class="shot shot-main">
+        <img
+          src="/screenshots/cockpit-plan-approval.png"
+          width="1920"
+          height="1080"
+          alt="The AgentUX cockpit on the live ISO: a run board with two demo runs, one of them waiting for plan approval in the inbox on the right."
+          loading="lazy"
+          decoding="async"
+        />
+        <figcaption>The cockpit: a run board for every project, and an inbox for what is waiting for you.</figcaption>
+      </figure>
+      <div class="shot-row">
+        <figure class="shot">
+          <img
+            src="/screenshots/boot-animation.gif"
+            width="450"
+            height="300"
+            alt="The boot splash: the AgentUX penguin swimming in place, its wake streaming back, with a wavy progress line."
+            loading="lazy"
+            decoding="async"
+          />
+          <figcaption>The boot splash. The penguin swims while the system starts.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img
+            src="/screenshots/installer.png"
+            width="1920"
+            height="1080"
+            alt="The AgentUX web installer on the live ISO."
+            loading="lazy"
+            decoding="async"
+          />
+          <figcaption>The installer on the live ISO, in AgentUX colours.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img
+            src="/screenshots/first-boot.png"
+            width="1920"
+            height="1080"
+            alt="First-boot setup over the AgentUX wallpaper."
+            loading="lazy"
+            decoding="async"
+          />
+          <figcaption>First boot: create your account, then the agent CLIs install themselves.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="how" aria-labelledby="how-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="how-h">How a run works</h2>
+        <p>Hand AgentUX an issue or a prompt, from the cockpit or the <code>aux</code> CLI. This is what happens next.</p>
+      </div>
+      <div class="how">
+        <ol class="steps">
+          <li>AgentUX creates a git worktree and a branch for the task.</li>
+          <li>A planner writes a plan, and waits for your approval if the pipeline asks for it.</li>
+          <li>An implementer harness works in the worktree. Its session streams to the cockpit.</li>
+          <li>Tests and linters gate the result. Failures loop back to the implementer, up to a limit.</li>
+          <li>A reviewer from a different vendor reviews the diff, and talks to the implementer over the agent bus when it needs to.</li>
+          <li>AgentUX opens the pull request.</li>
+        </ol>
+        <div class="yaml">
+          <p class="yaml-cap"><code>agentux.yaml</code>, the default pipeline, shortened</p>
+          <pre><code>roles:
+  planner:     {'{'} harness: claude-code {'}'}
+  implementer: {'{'} harness: claude-code {'}'}
+  reviewer:    {'{'} harness: codex {'}'}   <span class="c"># another vendor</span>
+
+pipeline:
+  - step: plan
+    approve: true            <span class="c"># wait for you</span>
+  - step: implement
+  - step: gate
+    checks: [lint, test]
+    on_fail: implement
+    max_attempts: 3
+  - step: review
+    on_changes_requested: implement
+  - step: pull_request</code></pre>
+        </div>
+      </div>
+
+      <div class="layers">
+        <h3 class="layers-h">The parts</h3>
+        <dl>
+          <div>
+            <dt>Harnesses over ACP</dt>
+            <dd>
+              Each provider's own CLI, driven through the <a href="https://agentclientprotocol.com">Agent Client Protocol</a>,
+              with headless modes as the fallback. AgentUX never handles your credentials.
+              <a href={adr('0002-harness-integration-via-acp.md')}>ADR 0002</a>
+            </dd>
+          </div>
+          <div>
+            <dt>The agent bus</dt>
+            <dd>
+              <code>agentuxd</code> exposes the bus to every harness as an MCP server: <code>post_message</code>,
+              <code>request_review</code>, <code>handoff</code>, <code>get_run_state</code>, <code>ask_human</code>. The daemon routes
+              every message and caps turns per exchange, so two agents cannot loop forever.
+              <a href={adr('0004-unified-interface-and-agent-bus.md')}>ADR 0004</a>
+            </dd>
+          </div>
+          <div>
+            <dt>The orchestrator</dt>
+            <dd>
+              A workflow engine in <code>agentuxd</code> runs the pipeline as a persisted state machine, with budgets per run and
+              approvals where you ask for them. <a href={adr('0003-workflow-engine.md')}>ADR 0003</a>
+            </dd>
+          </div>
+          <div>
+            <dt>The cockpit and <code>aux</code></dt>
+            <dd>
+              A Tauri desktop app over every session the daemon runs, and its terminal twin, which works over SSH. Any session can
+              switch to its vendor's TUI on the same conversation.
+              <a href={adr('0007-terminal-mode-is-a-session-handoff.md')}>ADR 0007</a>
+            </dd>
+          </div>
+          <div>
+            <dt>The OS</dt>
+            <dd>
+              Fedora Kinoite 44 built with bootc: KDE Plasma, or a Hyprland tiling session in the second image. Immutable, with
+              atomic updates and rollback, and every image signed with cosign.
+              <a href={adr('0010-image-variants-and-system-identity.md')}>ADR 0010</a>
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="status" aria-labelledby="status-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="status-h">Where it stands</h2>
+        <p>
+          AgentUX is pre-release (agentux-core 0.4.2 and agentux-desktop 0.4.5). Runs already go from prompt to pull request
+          through real harness sessions. This is what has been checked, and what has not.
+        </p>
+      </div>
+      <div class="status-grid">
+        <div>
+          <h3>Verified in CI</h3>
+          <ul class="checks yes">
+            <li>Both variants build and pass a first-login smoke test on amd64 and arm64.</li>
+            <li>The Plasma image boots nightly under QEMU/KVM on x86_64 and takes a fake-agent run to a pull request.</li>
+            <li>The x86_64 live and installer ISOs are installed in a VM before they are published.</li>
+            <li>Image signatures are checked against the policy installed systems enforce.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Not verified yet</h3>
+          <ul class="checks no">
+            <li>Full cross-vendor runs with real Claude Code, Codex and Antigravity sessions. OpenCode has been tried.</li>
+            <li>Booting the arm64 image on real hardware or a VM: CI's arm64 runners have no KVM.</li>
+            <li>Booting the Hyprland image. Its configuration is checked, not run.</li>
+          </ul>
+        </div>
+      </div>
+      <p class="status-more">
+        The <a href={`${gh}/agentux#roadmap`}>roadmap</a> lists what is done and what comes next.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="docs" aria-labelledby="docs-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="docs-h">Documentation</h2>
+        <p>The docs live with the code, on GitHub.</p>
+      </div>
+      <ul class="doc-links">
+        <li>
+          <a href={`${docs}/getting-started.md`}>Getting started</a>
+          <span>From install to a first run that ends in a pull request: first login, the cockpit tour, <code>aux</code>.</span>
+        </li>
+        <li>
+          <a href={`${docs}/getting-started.md#5-agentuxyaml`}>agentux.yaml</a>
+          <span>Roles, checks, the pipeline, bus limits, budgets and container isolation.</span>
+        </li>
+        <li>
+          <a href={`${gh}/agentux-os#install`}>Installing and updating</a>
+          <span>ISOs, <code>bootc switch</code>, release channels, rollback and verifying signatures.</span>
+        </li>
+        <li>
+          <a href={`${gh}/agentux/tree/main/docs/adr`}>Design decisions</a>
+          <span>Every architectural decision, recorded as an ADR.</span>
+        </li>
+        <li>
+          <a href={`${gh}/agentux-core`}>agentux-core</a>
+          <span>The <code>agentuxd</code> daemon, the <code>aux</code> CLI, the workflow engine and the harness adapters.</span>
+        </li>
+        <li>
+          <a href={`${gh}/agentux-desktop`}>agentux-desktop</a>
+          <span>The cockpit app and the Plasma configuration.</span>
+        </li>
+        <li>
+          <a href={`${gh}/agentux/tree/main/brand`}>Brand</a>
+          <span>The swimming penguin, the wordmark and the colours.</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section closing" aria-labelledby="closing-h">
+    <div class="wrap closing-row">
+      <h2 id="closing-h">Boot it, look around, install when you want to keep it.</h2>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="/download/">Download</a>
+        <a class="btn" href="/download/#bootc">Switch from Fedora Atomic</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    padding-top: clamp(2.5rem, 6vw, 4.5rem);
+    padding-bottom: clamp(2.5rem, 6vw, 5rem);
+    overflow: hidden;
+  }
+
+  .hero h1 {
+    font-size: clamp(1.9rem, 4vw, 3.3rem);
+    font-weight: 700;
+    font-stretch: 87.5%;
+    letter-spacing: -0.035em;
+    line-height: 1.08;
+    max-width: 19ch;
+  }
+
+  .lead {
+    margin-top: 1.6rem;
+    max-width: 40rem;
+    font-size: clamp(1.08rem, 1.6vw, 1.25rem);
+    color: var(--muted);
+  }
+
+  .cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+
+  .status {
+    max-width: 30rem;
+    margin-top: 1.4rem;
+    font-size: 0.92rem;
+    color: var(--muted);
+  }
+
+  .status a {
+    margin-left: 0.35rem;
+  }
+
+  .hero-copy {
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-art {
+    margin-top: clamp(1.5rem, 4vw, 2.5rem);
+  }
+
+  /* On wide screens the penguin swims up beside the copy, and the lanes run in under it. */
+  @media (min-width: 64rem) {
+    .hero-art {
+      margin-top: -12.5rem;
+    }
+
+    .lead {
+      max-width: 33rem;
+    }
+  }
+
+  /* Pillars */
+  .pillars {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 clamp(2rem, 5vw, 4.5rem);
+    margin: 0;
+  }
+
+  .pillars > div {
+    padding-block: 1.75rem;
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .pillars dt {
+    font-family: 'Martian Mono', ui-monospace, monospace;
+    font-stretch: 87.5%;
+    font-weight: 500;
+    font-size: 1.1rem;
+    letter-spacing: -0.01em;
+  }
+
+  .pillars dt::before {
+    content: '';
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    margin-right: 0.7rem;
+    border-radius: 50%;
+    background: var(--accent);
+    vertical-align: 0.15em;
+  }
+
+  .pillars dd {
+    margin: 0.7rem 0 0;
+    color: var(--muted);
+    max-width: 34rem;
+  }
+
+  /* Screenshots */
+  .shot {
+    margin: 0;
+  }
+
+  .shot img {
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--ink);
+    width: 100%;
+  }
+
+  .shot figcaption {
+    margin-top: 0.75rem;
+    font-size: 0.92rem;
+    color: var(--muted);
+  }
+
+  .shot-row {
+    margin-top: clamp(2rem, 4vw, 3rem);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(1rem, 2.5vw, 2rem);
+  }
+
+  .shot-row img {
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+  }
+
+  .shot-row .shot:first-child img {
+    object-fit: contain;
+  }
+
+  /* How it works */
+  .how {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: start;
+  }
+
+  .steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: step;
+  }
+
+  .steps li {
+    counter-increment: step;
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    padding-block: 0.95rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .steps li:last-child {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .steps li::before {
+    content: counter(step);
+    font-family: 'Martian Mono', ui-monospace, monospace;
+    color: var(--accent);
+    font-size: 0.95rem;
+    line-height: 1.75;
+  }
+
+  .yaml-cap {
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+  }
+
+  .layers {
+    margin-top: clamp(3rem, 6vw, 5rem);
+  }
+
+  .layers-h {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .layers dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(17rem, 100%), 1fr));
+    gap: 0 clamp(2rem, 4vw, 3rem);
+  }
+
+  .layers dl > div {
+    padding-block: 1.25rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .layers dt {
+    font-weight: 600;
+  }
+
+  .layers dd {
+    margin: 0.4rem 0 0;
+    color: var(--muted);
+    font-size: 0.98rem;
+  }
+
+  .layers dd a {
+    white-space: nowrap;
+  }
+
+  /* Status */
+  .status-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(2rem, 5vw, 4rem);
+  }
+
+  .status-grid h3 {
+    font-size: 1.05rem;
+    margin-bottom: 1rem;
+  }
+
+  .checks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .checks li {
+    position: relative;
+    padding: 0.8rem 0 0.8rem 1.9rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .checks li::before {
+    position: absolute;
+    left: 0;
+    top: 0.8rem;
+    font-family: 'Martian Mono', ui-monospace, monospace;
+    font-weight: 700;
+  }
+
+  .checks.yes li::before {
+    content: '\2713';
+    color: var(--accent);
+  }
+
+  .checks.no li::before {
+    content: '\25CB';
+    color: var(--muted);
+  }
+
+  .status-more {
+    margin-top: 2rem;
+    color: var(--muted);
+  }
+
+  /* Docs */
+  .doc-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(19rem, 100%), 1fr));
+    gap: 0 clamp(2rem, 4vw, 3rem);
+  }
+
+  .doc-links li {
+    padding-block: 1.1rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .doc-links a {
+    font-family: 'Martian Mono', ui-monospace, monospace;
+    font-stretch: 87.5%;
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .doc-links a:hover {
+    text-decoration: underline;
+  }
+
+  .doc-links span {
+    display: block;
+    margin-top: 0.35rem;
+    color: var(--muted);
+    font-size: 0.96rem;
+  }
+
+  /* Closing */
+  .closing {
+    background: var(--surface);
+  }
+
+  .closing-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem 3rem;
+  }
+
+  .closing h2 {
+    font-size: clamp(1.4rem, 2.6vw, 2rem);
+    max-width: 24ch;
+  }
+
+  .closing .cta-row {
+    margin-top: 0;
+  }
+
+  @media (max-width: 52rem) {
+    .pillars,
+    .how,
+    .status-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .shot-row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

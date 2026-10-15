@@ -1,0 +1,431 @@
+---
+import Base from '../layouts/Base.astro';
+
+const dl = 'https://download.agentuxos.org';
+const gh = 'https://github.com/agentux-os';
+const pubKey = 'https://github.com/agentux-os/agentux-os/blob/main/files/etc/pki/containers/agentux-os.pub';
+const releases = `${gh}/agentux-os/releases`;
+
+type Kind = 'live' | 'installer';
+type Arch = 'x86_64' | 'aarch64';
+const file = (kind: Kind, arch: Arch) => `agentux${kind === 'live' ? '-live' : ''}-${arch}.iso`;
+// Fallback when latest.json is not there yet: the fixed names in iso/stable/.
+const approx: Record<Kind, string> = { live: 'about 3.9 GB', installer: 'about 5.1 GB' };
+const archs: { arch: Arch; label: string; tested: boolean }[] = [
+  { arch: 'x86_64', label: 'x86_64', tested: true },
+  { arch: 'aarch64', label: 'aarch64 (64-bit ARM)', tested: false },
+];
+const kinds: { kind: Kind; title: string; id: string; body: string[] }[] = [
+  {
+    kind: 'live',
+    id: 'live',
+    title: 'Live ISO',
+    body: [
+      'Boots the real desktop from RAM without touching the disk, with a demo of fake agents already running in the cockpit, so nothing is billed.',
+      'When you want to keep it, Install AgentUX on the desktop installs the signed image from the registry. Installing needs an internet connection.',
+    ],
+  },
+  {
+    kind: 'installer',
+    id: 'installer',
+    title: 'Installer ISO',
+    body: [
+      'Goes straight to the installer: pick the disk, language and time zone, and create your account. The image is on the ISO, so it installs offline.',
+      'It is built with bootc-image-builder and still looks like Fedora’s installer.',
+    ],
+  },
+];
+---
+<Base
+  title="Download AgentUX"
+  description="Download the AgentUX live or installer ISO for x86_64 or aarch64, verify it with sha256 and cosign, or switch an existing Fedora Atomic system with bootc."
+  path="/download/"
+>
+  <section class="dl-hero">
+    <div class="wrap">
+      <h1>Download AgentUX</h1>
+      <p class="lead">
+        Try the live ISO first, or install directly. Both come for x86_64 PCs and 64-bit ARM UEFI machines, and install the
+        same signed image.
+      </p>
+      <p class="release" data-release>
+        These are the newest release, from <code>iso/stable/</code> on download.agentuxos.org. Every release is kept on
+        <a href={releases}>GitHub releases</a>.
+      </p>
+    </div>
+  </section>
+
+  <section class="isos" aria-label="ISO images">
+    <div class="wrap iso-grid">
+      {kinds.map((k) => (
+        <article class="iso" id={k.id} aria-labelledby={`${k.id}-h`}>
+          <h2 id={`${k.id}-h`}>{k.title}</h2>
+          {k.body.map((p) => <p class="muted">{p}</p>)}
+          <ul class="files">
+            {archs.map((a, i) => {
+              const url = `${dl}/iso/stable/${file(k.kind, a.arch)}`;
+              return (
+                <li data-iso={`${k.kind}-${a.arch}`}>
+                  <a class:list={['btn', i === 0 && k.kind === 'live' ? 'btn-primary' : null]} href={url} data-href>
+                    Download for {a.label}
+                  </a>
+                  <p class="meta">
+                    <span data-size>{approx[k.kind]}</span>
+                    <a href={`${url}.sha256`} data-sha>SHA-256</a>
+                    <span class:list={['tested', !a.tested && 'untested']} data-tested>
+                      {a.tested ? 'Booted and installed in CI' : 'Built in CI, not boot-tested yet'}
+                    </span>
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        </article>
+      ))}
+    </div>
+    <div class="wrap">
+      <p class="note muted">
+        Both boot with UEFI only, no legacy BIOS. In a VM, give AgentUX at least 4 GB of RAM; 8 GB is comfortable. The aarch64
+        ISOs target UEFI machines Fedora supports (SystemReady hardware, VMs on Apple silicon or Ampere hosts); boards that
+        need their own firmware or kernel are not covered.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="verify" aria-labelledby="verify-h">
+    <div class="wrap two-col">
+      <div class="section-head">
+        <h2 id="verify-h">Check the download</h2>
+        <p>
+          Next to every ISO are its <code>.sha256</code> and a cosign signature of that checksum, made with the key that signs
+          the images. The public key is
+          <a href={pubKey}><code>agentux-os.pub</code></a>
+          in agentux-os, and <code>/etc/pki/containers/agentux-os.pub</code> on an installed system.
+        </p>
+      </div>
+      <div class="steps-col">
+        <h3>1. Check the checksum</h3>
+        <pre><code>curl -LO {dl}/iso/stable/agentux-live-x86_64.iso.sha256
+sha256sum --check agentux-live-x86_64.iso.sha256</code></pre>
+        <h3>2. Check that the checksum is signed</h3>
+        <pre><code>curl -LO {dl}/iso/stable/agentux-live-x86_64.iso.sha256.sigstore.json
+curl -LO https://raw.githubusercontent.com/agentux-os/agentux-os/main/files/etc/pki/containers/agentux-os.pub
+cosign verify-blob --key agentux-os.pub \
+  --bundle agentux-live-x86_64.iso.sha256.sigstore.json \
+  agentux-live-x86_64.iso.sha256</code></pre>
+        <h3>3. Write it to a USB stick</h3>
+        <pre><code><span class="c"># replace /dev/sdX with the stick; everything on it is erased</span>
+sudo dd if=agentux-live-x86_64.iso of=/dev/sdX bs=4M status=progress oflag=sync</code></pre>
+        <p class="muted small">
+          Use the same names with the ISO you downloaded. A release directory also has a combined, signed
+          <code>SHA256SUMS</code>; see <a href={`${gh}/agentux-os#downloads`}>Downloads</a> in agentux-os.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="channels" aria-labelledby="channels-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="channels-h">Release channels</h2>
+        <p>
+          An installed system follows exactly one channel and updates from it with <code>bootc upgrade</code>. You can change
+          channel at any time.
+        </p>
+      </div>
+      <div class="channels">
+        <div>
+          <h3><code>:stable</code></h3>
+          <p>
+            Releases. It moves only when a <code>v*</code> tag has passed every test, including the ISO installs, and the
+            maintainer approves it. Systems installed from these ISOs follow <code>:stable</code>.
+          </p>
+        </div>
+        <div>
+          <h3><code>:latest</code></h3>
+          <p>
+            Nightly builds of <code>main</code>, rebuilt every day for Fedora's updates and on every merge. Newer, less
+            tested. Systems installed before the first release follow it until you switch.
+          </p>
+        </div>
+      </div>
+      <p class="muted small channel-note">
+        Each release also keeps its own tag (<code>:v&lt;version&gt;</code>) and each nightly a dated one
+        (<code>:&lt;YYYYMMDD&gt;</code>); neither ever moves. Going from <code>:latest</code> to <code>:stable</code> usually
+        means an older image, which is fine on an image-based system.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="bootc" aria-labelledby="bootc-h">
+    <div class="wrap two-col">
+      <div class="section-head">
+        <h2 id="bootc-h">Already on Fedora Atomic?</h2>
+        <p>
+          Any Fedora Atomic or bootc system can switch to AgentUX in place, on x86_64 and aarch64 alike: each tag is a
+          multi-arch manifest, and bootc pulls the image for your machine. Your home directory is untouched.
+        </p>
+      </div>
+      <div class="steps-col">
+        <h3>KDE Plasma (the default)</h3>
+        <pre><code>sudo bootc switch ghcr.io/agentux-os/agentux:stable
+systemctl reboot</code></pre>
+        <h3>Hyprland</h3>
+        <pre><code>sudo bootc switch ghcr.io/agentux-os/agentux-hyprland:stable
+systemctl reboot</code></pre>
+        <p class="muted small">
+          The Hyprland image adds a tiling session laid out for watching several agents, and keeps Plasma one click away at
+          login. Release ISOs are Plasma only, so install one and switch. Use <code>:latest</code> instead of
+          <code>:stable</code> for nightly builds. If an update breaks something, <code>sudo bootc rollback</code> (or the
+          previous entry in the boot menu) brings back the image you had.
+        </p>
+        <h3>Check the image signature</h3>
+        <pre><code>cosign verify --key agentux-os.pub ghcr.io/agentux-os/agentux:stable
+
+cosign verify ghcr.io/agentux-os/agentux:stable \
+  --certificate-identity-regexp '^https://github\.com/agentux-os/agentux-os/\.github/workflows/build\.yml@refs/tags/v' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com</code></pre>
+        <p class="muted small">
+          You do not need this on an installed system: its container policy requires the AgentUX key signature, so
+          <code>bootc upgrade</code> and <code>bootc switch</code> refuse an unsigned image before downloading it.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section next" aria-labelledby="next-h">
+    <div class="wrap">
+      <h2 id="next-h">After the first boot</h2>
+      <p class="muted">
+        The agent CLIs install themselves on your first login. Then sign in to each vendor CLI you want to use, open the
+        cockpit with Meta+A, and start a run. <a href={`${gh}/agentux/blob/main/docs/getting-started.md`}>Getting started</a>
+        walks through it.
+      </p>
+    </div>
+  </section>
+</Base>
+
+<script is:inline>
+  (function () {
+    var fmt = function (n) {
+      return (n / 1e9).toFixed(1) + ' GB';
+    };
+    var ctrl = 'AbortController' in window ? new AbortController() : null;
+    var timer = setTimeout(function () {
+      if (ctrl) ctrl.abort();
+    }, 6000);
+    fetch('https://download.agentuxos.org/latest.json', { signal: ctrl ? ctrl.signal : undefined, cache: 'no-cache' })
+      .then(function (r) {
+        if (!r.ok) throw new Error(String(r.status));
+        return r.json();
+      })
+      .then(function (data) {
+        clearTimeout(timer);
+        if (!data || !Array.isArray(data.isos)) return;
+        data.isos.forEach(function (iso) {
+          if (iso.variant && iso.variant !== 'plasma') return;
+          var li = document.querySelector('[data-iso="' + iso.kind + '-' + iso.arch + '"]');
+          if (!li) return;
+          var url = iso.stable_url || iso.url;
+          if (url) li.querySelector('[data-href]').href = url;
+          if (iso.url) li.querySelector('[data-sha]').href = iso.url + '.sha256';
+          if (typeof iso.size === 'number') li.querySelector('[data-size]').textContent = fmt(iso.size);
+          var t = li.querySelector('[data-tested]');
+          if (typeof iso.boot_tested === 'boolean') {
+            t.textContent = iso.boot_tested ? 'Booted and installed in CI' : 'Built in CI, not boot-tested yet';
+            t.classList.toggle('untested', !iso.boot_tested);
+          }
+        });
+        var rel = document.querySelector('[data-release]');
+        if (rel && data.version) {
+          var date = data.date ? new Date(data.date) : null;
+          var when = date && !isNaN(date) ? ', released ' + date.toLocaleDateString('en', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+          rel.textContent = '';
+          rel.append('Newest release: ');
+          var strong = document.createElement('strong');
+          strong.textContent = data.version;
+          rel.append(strong, when + '. ');
+          if (data.release_notes) {
+            var a = document.createElement('a');
+            a.href = data.release_notes;
+            a.textContent = 'Release notes';
+            rel.append(a);
+          }
+        }
+      })
+      .catch(function () {
+        clearTimeout(timer);
+      });
+  })();
+</script>
+
+<style>
+  .dl-hero {
+    padding-top: clamp(3rem, 7vw, 5.5rem);
+    padding-bottom: 2.5rem;
+  }
+
+  .dl-hero h1 {
+    font-size: clamp(2rem, 4.4vw, 3.5rem);
+    font-weight: 700;
+    letter-spacing: -0.035em;
+  }
+
+  .lead {
+    margin-top: 1.2rem;
+    max-width: 40rem;
+    font-size: clamp(1.08rem, 1.6vw, 1.2rem);
+    color: var(--muted);
+  }
+
+  .release {
+    margin-top: 1.2rem;
+    font-size: 0.95rem;
+    color: var(--muted);
+  }
+
+  .release :global(strong) {
+    color: var(--text);
+    font-family: 'Martian Mono', ui-monospace, monospace;
+    font-weight: 500;
+  }
+
+  .isos {
+    padding-bottom: clamp(3rem, 7vw, 5rem);
+  }
+
+  .iso-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(1.25rem, 3vw, 2rem);
+  }
+
+  .iso {
+    background: var(--surface);
+    border-radius: 10px;
+    padding: clamp(1.4rem, 3vw, 2.2rem);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .iso:first-child {
+    box-shadow: inset 0 3px 0 var(--accent);
+  }
+
+  .iso h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .iso > p + p {
+    margin-top: 0.75rem;
+  }
+
+  .files {
+    list-style: none;
+    margin: auto 0 0;
+    padding: 1.75rem 0 0;
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .files .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    margin-top: 0.55rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .tested {
+    color: var(--accent);
+  }
+
+  .tested.untested {
+    color: var(--warn);
+  }
+
+  .note {
+    margin-top: 1.5rem;
+    max-width: 52rem;
+    font-size: 0.95rem;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: start;
+  }
+
+  .two-col .section-head {
+    margin-bottom: 0;
+  }
+
+  .steps-col h3 {
+    font-size: 1rem;
+    margin: 1.75rem 0 0.7rem;
+  }
+
+  .steps-col h3:first-child {
+    margin-top: 0;
+  }
+
+  .small {
+    font-size: 0.92rem;
+    margin-top: 0.9rem;
+  }
+
+  .channels {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(2rem, 5vw, 4rem);
+  }
+
+  .channels > div {
+    border-top: 1px solid var(--line-strong);
+    padding-top: 1.25rem;
+  }
+
+  .channels h3 {
+    font-size: 1.35rem;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+  }
+
+  .channels h3 code {
+    font-size: 1em;
+  }
+
+  .channels p {
+    color: var(--muted);
+  }
+
+  .channel-note {
+    margin-top: 2rem;
+    max-width: 52rem;
+  }
+
+  .next h2 {
+    font-size: 1.4rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .next p {
+    max-width: 44rem;
+  }
+
+  @media (max-width: 52rem) {
+    .iso-grid,
+    .two-col,
+    .channels {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

@@ -1,0 +1,18 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Page not found | AgentUX" description="This page does not exist on agentuxos.org." path="/404">
+  <section class="nf">
+    <div class="wrap">
+      <h1>This page does not exist.</h1>
+      <p>The link may be old, or the address mistyped.</p>
+      <p class="links"><a class="btn btn-primary" href="/">Go to the home page</a> <a class="btn" href="/download/">Download AgentUX</a></p>
+    </div>
+  </section>
+</Base>
+<style>
+  .nf { padding-block: clamp(4rem, 12vw, 9rem); }
+  h1 { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 700; }
+  p { margin-top: 1rem; color: var(--muted); }
+  .links { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
+</style>
