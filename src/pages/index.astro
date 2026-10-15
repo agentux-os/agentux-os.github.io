@@ -76,6 +76,36 @@ const adr = (n: string) => `${gh}/agentux/blob/main/docs/adr/${n}`;
     </div>
   </section>
 
+  <section class="section" id="suite" aria-labelledby="suite-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="suite-h">One platform, from the node to the organization</h2>
+        <p>
+          AgentUX is becoming a suite: local nodes execute the work, while a remote command center lets leadership see
+          missions, teams and operations across the organization.
+        </p>
+      </div>
+      <dl class="pillars">
+        <div>
+          <dt>AgentUX OS</dt>
+          <dd>The immutable Linux station for running agents locally, with the cockpit, vendor CLIs and safe rollback.</dd>
+        </div>
+        <div>
+          <dt>AgentUX Core</dt>
+          <dd>The local runtime: worktrees, ACP sessions, approvals, gates, agent bus and pull-request automation.</dd>
+        </div>
+        <div>
+          <dt><a href={`${gh}/agentux-command`}>AgentUX Command</a></dt>
+          <dd>The remote control plane for organizations, missions, governance, telemetry and multiple AgentUX nodes.</dd>
+        </div>
+        <div>
+          <dt><a href={`${gh}/agentux-apps`}>AgentUX Office</a></dt>
+          <dd>A visual command center where leadership can see departments, agents, missions and incidents as they unfold.</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
   <section class="section" id="screenshots" aria-labelledby="shots-h">
     <div class="wrap">
       <div class="section-head">
@@ -279,6 +309,14 @@ pipeline:
         <li>
           <a href={`${gh}/agentux-desktop`}>agentux-desktop</a>
           <span>The cockpit app and the Plasma configuration.</span>
+        </li>
+        <li>
+          <a href={`${gh}/agentux-command`}>agentux-command</a>
+          <span>The remote control plane for organizations, missions, governance and AgentUX nodes.</span>
+        </li>
+        <li>
+          <a href={`${gh}/agentux-apps`}>agentux-apps</a>
+          <span>The web experiences for AgentUX Command and the Office visual command center.</span>
         </li>
         <li>
           <a href={`${gh}/agentux/tree/main/brand`}>Brand</a>
