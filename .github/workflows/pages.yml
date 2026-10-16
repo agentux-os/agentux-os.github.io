@@ -24,6 +24,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      - run: node tests/download-page.mjs
       - name: Check the build output
         run: |
           for f in index.html download/index.html 404.html sitemap.xml robots.txt CNAME favicon.svg brand/social-1280x640.png; do
