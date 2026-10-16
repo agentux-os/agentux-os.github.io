@@ -9,6 +9,7 @@ const releases = `${gh}/agentux-os/releases`;
 type Kind = 'live' | 'installer';
 type Arch = 'x86_64' | 'aarch64';
 const file = (kind: Kind, arch: Arch) => `agentux${kind === 'live' ? '-live' : ''}-${arch}.iso`;
+const cosmicLiveFile = (arch: Arch) => `agentux-cosmic-live-${arch}.iso`;
 // Fallback when latest.json is not there yet: the fixed names in iso/stable/.
 const approx: Record<Kind, string> = { live: 'about 3.9 GB', installer: 'about 5.1 GB' };
 const archs: { arch: Arch; label: string; tested: boolean }[] = [
@@ -80,6 +81,34 @@ const kinds: { kind: Kind; title: string; id: string; body: string[] }[] = [
               );
             })}
           </ul>
+          {k.kind === 'live' && (
+            <section class="variant-option" id="cosmic-live" aria-labelledby="cosmic-live-h">
+              <div class="variant-title">
+                <h3 id="cosmic-live-h">COSMIC Live ISO</h3>
+                <span class="experimental">Experimental · nightly only</span>
+              </div>
+              <p class="muted">
+                Try the separate COSMIC desktop live image. It is experimental and is not part of the stable releases.
+                The x86_64 image is published only after its live and installation VM tests pass; aarch64 is built but
+                cannot be boot-tested in CI.
+              </p>
+              <ul class="files">
+                {archs.map((a) => {
+                  const url = `${dl}/iso/nightly/${cosmicLiveFile(a.arch)}`;
+                  return (
+                    <li data-cosmic-iso={a.arch}>
+                      <a class="btn" href={url}>Download COSMIC for {a.label}</a>
+                      <p class="meta">
+                        <span>Nightly · may be unavailable until the first successful publish</span>
+                        <a href={`${url}.sha256`}>SHA-256</a>
+                      </p>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p class="muted small">The checksum signature and the nightly channel's combined SHA256SUMS are available beside the ISO.</p>
+            </section>
+          )}
         </article>
       ))}
     </div>
@@ -337,6 +366,28 @@ cosign verify ghcr.io/agentux-os/agentux:stable \
 
   .iso > p + p {
     margin-top: 0.75rem;
+  }
+  .variant-option {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line);
+  }
+  .variant-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+  }
+  .variant-title h3 {
+    margin: 0;
+  }
+  .experimental {
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
   }
 
   .files {
