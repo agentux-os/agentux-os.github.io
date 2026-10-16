@@ -62,52 +62,114 @@ const kinds: { kind: Kind; title: string; id: string; body: string[] }[] = [
         <article class="iso" id={k.id} aria-labelledby={`${k.id}-h`}>
           <h2 id={`${k.id}-h`}>{k.title}</h2>
           {k.body.map((p) => <p class="muted">{p}</p>)}
-          <ul class="files">
-            {archs.map((a, i) => {
-              const url = `${dl}/iso/stable/${file(k.kind, a.arch)}`;
-              return (
-                <li data-iso={`${k.kind}-${a.arch}`}>
-                  <a class:list={['btn', i === 0 && k.kind === 'live' ? 'btn-primary' : null]} href={url} data-href>
-                    Download for {a.label}
-                  </a>
-                  <p class="meta">
-                    <span data-size>{approx[k.kind]}</span>
-                    <a href={`${url}.sha256`} data-sha>SHA-256</a>
-                    <span class:list={['tested', !a.tested && 'untested']} data-tested>
-                      {a.tested ? 'Booted and installed in CI' : 'Built in CI, not boot-tested yet'}
-                    </span>
-                  </p>
-                </li>
-              );
-            })}
-          </ul>
-          {k.kind === 'live' && (
-            <section class="variant-option" id="cosmic-live" aria-labelledby="cosmic-live-h">
-              <div class="variant-title">
-                <h3 id="cosmic-live-h">COSMIC Live ISO</h3>
-                <span class="experimental">Experimental · nightly only</span>
+          {k.kind === 'live' ? (
+            <>
+              <div class="live-tabs" role="tablist" aria-label="Live desktop">
+                <button
+                  class="live-tab"
+                  id="live-tab-plasma"
+                  type="button"
+                  role="tab"
+                  aria-controls="live-panel-plasma"
+                  aria-selected="true"
+                  tabindex="0"
+                  data-live-tab
+                >
+                  KDE Plasma
+                </button>
+                <button
+                  class="live-tab"
+                  id="live-tab-cosmic"
+                  type="button"
+                  role="tab"
+                  aria-controls="live-panel-cosmic"
+                  aria-selected="false"
+                  tabindex="-1"
+                  data-live-tab
+                >
+                  COSMIC <span class="tab-badge">Nightly</span>
+                </button>
               </div>
-              <p class="muted">
-                Try the separate COSMIC desktop live image. It is experimental and is not part of the stable releases.
-                The x86_64 image is published only after its live and installation VM tests pass; aarch64 is built but
-                cannot be boot-tested in CI.
-              </p>
-              <ul class="files">
-                {archs.map((a) => {
-                  const url = `${dl}/iso/nightly/${cosmicLiveFile(a.arch)}`;
-                  return (
-                    <li data-cosmic-iso={a.arch}>
-                      <a class="btn" href={url}>Download COSMIC for {a.label}</a>
-                      <p class="meta">
-                        <span>Nightly · may be unavailable until the first successful publish</span>
-                        <a href={`${url}.sha256`}>SHA-256</a>
-                      </p>
-                    </li>
-                  );
-                })}
-              </ul>
-              <p class="muted small">The checksum signature and the nightly channel's combined SHA256SUMS are available beside the ISO.</p>
-            </section>
+
+              <section
+                class="live-panel"
+                id="live-panel-plasma"
+                role="tabpanel"
+                aria-labelledby="live-tab-plasma"
+                tabindex="0"
+                data-live-panel
+              >
+                <p class="variant-summary">KDE Plasma <span>Stable release</span></p>
+                <ul class="files">
+                  {archs.map((a, i) => {
+                    const url = `${dl}/iso/stable/${file('live', a.arch)}`;
+                    return (
+                      <li data-iso={`live-${a.arch}`}>
+                        <a class:list={['btn', i === 0 ? 'btn-primary' : null]} href={url} data-href>
+                          Download for {a.label}
+                        </a>
+                        <p class="meta">
+                          <span data-size>{approx.live}</span>
+                          <a href={`${url}.sha256`} data-sha>SHA-256</a>
+                          <span class:list={['tested', !a.tested && 'untested']} data-tested>
+                            {a.tested ? 'Booted and installed in CI' : 'Built in CI, not boot-tested yet'}
+                          </span>
+                        </p>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+
+              <section
+                class="live-panel"
+                id="live-panel-cosmic"
+                role="tabpanel"
+                aria-labelledby="live-tab-cosmic"
+                tabindex="0"
+                data-live-panel
+                hidden
+              >
+                <p class="variant-summary">COSMIC <span class="experimental">Experimental · nightly only</span></p>
+                <p class="muted cosmic-note">
+                  A separate COSMIC desktop image, not included in stable releases. The x86_64 image is published only after
+                  its live and installation VM tests pass; aarch64 is built but cannot be boot-tested in CI.
+                </p>
+                <ul class="files">
+                  {archs.map((a) => {
+                    const url = `${dl}/iso/nightly/${cosmicLiveFile(a.arch)}`;
+                    return (
+                      <li data-cosmic-iso={a.arch}>
+                        <a class="btn" href={url}>Download for {a.label}</a>
+                        <p class="meta">
+                          <span>Nightly · may be unavailable until the first successful publish</span>
+                          <a href={`${url}.sha256`}>SHA-256</a>
+                        </p>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p class="muted small">The checksum signature and the nightly channel's combined SHA256SUMS are available beside the ISO.</p>
+              </section>
+            </>
+          ) : (
+            <ul class="files">
+              {archs.map((a) => {
+                const url = `${dl}/iso/stable/${file('installer', a.arch)}`;
+                return (
+                  <li data-iso={`installer-${a.arch}`}>
+                    <a class="btn" href={url} data-href>Download for {a.label}</a>
+                    <p class="meta">
+                      <span data-size>{approx.installer}</span>
+                      <a href={`${url}.sha256`} data-sha>SHA-256</a>
+                      <span class:list={['tested', !a.tested && 'untested']} data-tested>
+                        {a.tested ? 'Booted and installed in CI' : 'Built in CI, not boot-tested yet'}
+                      </span>
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
           )}
         </article>
       ))}
@@ -306,6 +368,39 @@ cosign verify ghcr.io/agentux-os/agentux:stable \
   })();
 </script>
 
+<script is:inline>
+  (() => {
+    const tabs = Array.from(document.querySelectorAll('[data-live-tab]'));
+    if (!tabs.length) return;
+
+    const selectTab = (selectedTab) => {
+      tabs.forEach((tab) => {
+        const selected = tab === selectedTab;
+        tab.setAttribute('aria-selected', String(selected));
+        tab.tabIndex = selected ? 0 : -1;
+        const panel = document.getElementById(tab.getAttribute('aria-controls'));
+        if (panel) panel.hidden = !selected;
+      });
+    };
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => selectTab(tab));
+      tab.addEventListener('keydown', (event) => {
+        let nextIndex;
+        if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
+        else if (event.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
+        else if (event.key === 'Home') nextIndex = 0;
+        else if (event.key === 'End') nextIndex = tabs.length - 1;
+        else return;
+
+        event.preventDefault();
+        tabs[nextIndex].focus();
+        selectTab(tabs[nextIndex]);
+      });
+    });
+  })();
+</script>
+
 <style>
   .dl-hero {
     padding-top: clamp(3rem, 7vw, 5.5rem);
@@ -367,33 +462,70 @@ cosign verify ghcr.io/agentux-os/agentux:stable \
   .iso > p + p {
     margin-top: 0.75rem;
   }
-  .variant-option {
-    margin-top: 1.5rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--line);
+  .live-tabs {
+    display: flex;
+    gap: 0.35rem;
+    margin-top: 1.4rem;
+    border-bottom: 1px solid var(--line-strong);
   }
-  .variant-title {
+
+  .live-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: -1px;
+    padding: 0.7rem 0.85rem;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .live-tab[aria-selected='true'] {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+  }
+
+  .live-panel {
+    padding-top: 1rem;
+  }
+
+  .variant-summary {
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 0.5rem 1rem;
+    gap: 0.35rem 1rem;
+    font-weight: 600;
   }
-  .variant-title h3 {
-    margin: 0;
+
+  .variant-summary > span:not(.experimental) {
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 400;
   }
+
+  .tab-badge,
   .experimental {
-    color: var(--accent);
-    font-size: 0.8rem;
+    color: var(--warn);
+    font-size: 0.75rem;
     font-weight: 700;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
+  }
+
+  .cosmic-note {
+    margin-top: 0.65rem;
   }
 
   .files {
     list-style: none;
-    margin: auto 0 0;
-    padding: 1.75rem 0 0;
+    margin: 0;
+    padding: 1.25rem 0 0;
     display: grid;
     gap: 1.25rem;
   }
@@ -401,6 +533,11 @@ cosign verify ghcr.io/agentux-os/agentux:stable \
   .files .btn {
     width: 100%;
     justify-content: center;
+  }
+
+  .iso > .files {
+    margin-top: auto;
+    padding-top: 1.75rem;
   }
 
   .meta {
