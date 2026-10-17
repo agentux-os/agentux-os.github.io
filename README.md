@@ -1,5 +1,14 @@
 # agentuxos.org
 
+<p align="center">
+  <a href="https://agentuxos.org">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/agentux-os/agentux/main/brand/svg/lockup-dark.svg">
+      <img alt="AgentUX" src="https://raw.githubusercontent.com/agentux-os/agentux/main/brand/svg/lockup-light.svg" width="320">
+    </picture>
+  </a>
+</p>
+
 <p>
   <a href="https://github.com/agentux-os/agentux-os.github.io/actions/workflows/pages.yml"><img alt="Pages build" src="https://img.shields.io/github/actions/workflow/status/agentux-os/agentux-os.github.io/pages.yml?branch=main&label=pages&logo=github&labelColor=0b0d10"></a>
   <a href="https://github.com/agentux-os/agentux-os.github.io/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/agentux-os/agentux-os.github.io?label=updated&labelColor=0b0d10&color=4f7d0b"></a>
