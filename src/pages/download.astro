@@ -279,12 +279,9 @@ sudo dd if=agentux-live-x86_64.iso of=/dev/sdX bs=4M status=progress oflag=sync<
         <h3>KDE Plasma (the default)</h3>
         <pre><code>sudo bootc switch ghcr.io/agentux-os/agentux:stable
 systemctl reboot</code></pre>
-        <h3>Hyprland</h3>
-        <pre><code>sudo bootc switch ghcr.io/agentux-os/agentux-hyprland:stable
-systemctl reboot</code></pre>
         <p class="muted small">
-          The Hyprland image adds a tiling session laid out for watching several agents, and keeps Plasma one click away at
-          login. Release ISOs are Plasma only, so install one and switch. Use <code>:latest</code> instead of
+          On the retired Hyprland image (<code>agentux-hyprland</code>, last released in v0.5.9)? The same command moves
+          you to Plasma, keeping your home and settings. Use <code>:latest</code> instead of
           <code>:stable</code> for nightly builds. If an update breaks something, <code>sudo bootc rollback</code> (or the
           previous entry in the boot menu) brings back the image you had.
         </p>
