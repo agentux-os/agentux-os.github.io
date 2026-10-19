@@ -6,12 +6,18 @@ const gh = 'https://github.com/agentux-os';
 const pubKey = 'https://github.com/agentux-os/agentux-os/blob/main/files/etc/pki/containers/agentux-os.pub';
 const releases = `${gh}/agentux-os/releases`;
 
+type Desktop = 'plasma' | 'cosmic';
 type Kind = 'live' | 'installer';
 type Arch = 'x86_64' | 'aarch64';
-const file = (kind: Kind, arch: Arch) => `agentux${kind === 'live' ? '-live' : ''}-${arch}.iso`;
-const cosmicLiveFile = (arch: Arch) => `agentux-cosmic-live-${arch}.iso`;
-// Fallback when latest.json is not there yet: the fixed names in iso/stable/.
-const approx: Record<Kind, string> = { live: 'about 3.9 GB', installer: 'about 5.1 GB' };
+// Every ISO is agentux-<desktop>-<live|installer>-<version>-<arch>.iso; iso/stable/
+// keeps the newest release under the same name without the version. These
+// links work without latest.json, which then fills in sizes and test results.
+const file = (desktop: Desktop, kind: Kind, arch: Arch) => `agentux-${desktop}-${kind}-${arch}.iso`;
+const desktops: { desktop: Desktop; title: string }[] = [
+  { desktop: 'plasma', title: 'KDE Plasma' },
+  { desktop: 'cosmic', title: 'COSMIC' },
+];
+const approx: Record<Kind, string> = { live: 'about 4 GB', installer: 'about 5 GB' };
 const archs: { arch: Arch; label: string; tested: boolean }[] = [
   { arch: 'x86_64', label: 'x86_64', tested: true },
   { arch: 'aarch64', label: 'aarch64 (64-bit ARM)', tested: false },
@@ -29,9 +35,9 @@ const kinds: { kind: Kind; title: string; id: string; body: string[] }[] = [
   {
     kind: 'installer',
     id: 'installer',
-    title: 'Installer ISO',
+    title: 'Offline installer ISO',
     body: [
-      'Goes straight to the installer: pick the disk, language and time zone, and create your account. The image is on the ISO, so it installs offline.',
+      'Goes straight to the installer: pick the disk, language and time zone. The image is on the ISO, so it installs offline.',
       'It runs Anaconda, the Fedora installer, with the AgentUX look; installs are tested in a VM before every release.',
     ],
   },
@@ -46,8 +52,8 @@ const kinds: { kind: Kind; title: string; id: string; body: string[] }[] = [
     <div class="wrap">
       <h1>Download AgentUX</h1>
       <p class="lead">
-        Try the live ISO first, or install directly. Both come for x86_64 PCs and 64-bit ARM UEFI machines, and install the
-        same signed image.
+        Pick a desktop, KDE Plasma or COSMIC, then try it live first or install it offline. Every ISO comes for x86_64 PCs
+        and 64-bit ARM UEFI machines, and installs the desktop's signed image.
       </p>
       <p class="release" data-release>
         These are the newest release, from <code>iso/stable/</code> on download.agentuxos.org. Every release is kept on
@@ -57,128 +63,70 @@ const kinds: { kind: Kind; title: string; id: string; body: string[] }[] = [
   </section>
 
   <section class="isos" aria-label="ISO images">
-    <div class="wrap iso-grid">
-      {kinds.map((k) => (
-        <article class="iso" id={k.id} aria-labelledby={`${k.id}-h`}>
-          <h2 id={`${k.id}-h`}>{k.title}</h2>
-          {k.body.map((p) => <p class="muted">{p}</p>)}
-          {k.kind === 'live' ? (
-            <>
-              <div class="live-tabs" role="tablist" aria-label="Live desktop">
-                <button
-                  class="live-tab"
-                  id="live-tab-plasma"
-                  type="button"
-                  role="tab"
-                  aria-controls="live-panel-plasma"
-                  aria-selected="true"
-                  tabindex="0"
-                  data-live-tab
-                >
-                  KDE Plasma
-                </button>
-                <button
-                  class="live-tab"
-                  id="live-tab-cosmic"
-                  type="button"
-                  role="tab"
-                  aria-controls="live-panel-cosmic"
-                  aria-selected="false"
-                  tabindex="-1"
-                  data-live-tab
-                >
-                  COSMIC <span class="tab-badge">Nightly</span>
-                </button>
-              </div>
-
-              <section
-                class="live-panel"
-                id="live-panel-plasma"
-                role="tabpanel"
-                aria-labelledby="live-tab-plasma"
-                tabindex="0"
-                data-live-panel
-              >
-                <p class="variant-summary">KDE Plasma <span>Stable release</span></p>
-                <ul class="files">
-                  {archs.map((a, i) => {
-                    const url = `${dl}/iso/stable/${file('live', a.arch)}`;
-                    return (
-                      <li data-iso={`live-${a.arch}`}>
-                        <a class:list={['btn', i === 0 ? 'btn-primary' : null]} href={url} data-href>
-                          Download for {a.label}
-                        </a>
-                        <p class="meta">
-                          <span data-size>{approx.live}</span>
-                          <a href={`${url}.sha256`} data-sha>SHA-256</a>
-                          <span class:list={['tested', !a.tested && 'untested']} data-tested>
-                            {a.tested ? 'Booted and installed in CI' : 'Built in CI, not boot-tested yet'}
-                          </span>
-                        </p>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
-
-              <section
-                class="live-panel"
-                id="live-panel-cosmic"
-                role="tabpanel"
-                aria-labelledby="live-tab-cosmic"
-                tabindex="0"
-                data-live-panel
-                hidden
-              >
-                <p class="variant-summary">COSMIC <span class="experimental">Experimental · nightly only</span></p>
-                <p class="muted cosmic-note">
-                  A separate COSMIC desktop image, not included in stable releases. The x86_64 image is published only after
-                  its live and installation VM tests pass; aarch64 is built but cannot be boot-tested in CI.
-                </p>
-                <ul class="files">
-                  {archs.map((a) => {
-                    const url = `${dl}/iso/nightly/${cosmicLiveFile(a.arch)}`;
-                    return (
-                      <li data-cosmic-iso={a.arch}>
-                        <a class="btn" href={url}>Download for {a.label}</a>
-                        <p class="meta">
-                          <span>Nightly · may be unavailable until the first successful publish</span>
-                          <a href={`${url}.sha256`}>SHA-256</a>
-                        </p>
-                      </li>
-                    );
-                  })}
-                </ul>
-                <p class="muted small">The checksum signature and the nightly channel's combined SHA256SUMS are available beside the ISO.</p>
-              </section>
-            </>
-          ) : (
+    <div class="wrap">
+      <div class="desktop-tabs" role="tablist" aria-label="Desktop">
+        {desktops.map((d, i) => (
+          <button
+            class="desktop-tab"
+            id={`tab-${d.desktop}`}
+            type="button"
+            role="tab"
+            aria-controls={`panel-${d.desktop}`}
+            aria-selected={i === 0 ? 'true' : 'false'}
+            tabindex={i === 0 ? 0 : -1}
+            data-desktop-tab
+          >
+            {d.title}
+          </button>
+        ))}
+      </div>
+    </div>
+    {desktops.map((d, i) => (
+      <section
+        class="wrap iso-grid desktop-panel"
+        id={`panel-${d.desktop}`}
+        role="tabpanel"
+        aria-labelledby={`tab-${d.desktop}`}
+        hidden={i !== 0}
+        data-desktop-panel
+      >
+        {kinds.map((k) => (
+          <article class="iso" id={i === 0 ? k.id : undefined} aria-labelledby={`${d.desktop}-${k.id}-h`}>
+            <h2 id={`${d.desktop}-${k.id}-h`}>
+              {d.title} <span class="kind">{k.title}</span>
+            </h2>
+            {k.body.map((p) => <p class="muted">{p}</p>)}
             <ul class="files">
-              {archs.map((a) => {
-                const url = `${dl}/iso/stable/${file('installer', a.arch)}`;
+              {archs.map((a, j) => {
+                const url = `${dl}/iso/stable/${file(d.desktop, k.kind, a.arch)}`;
                 return (
-                  <li data-iso={`installer-${a.arch}`}>
-                    <a class="btn" href={url} data-href>Download for {a.label}</a>
+                  <li data-iso={`${d.desktop}-${k.kind}-${a.arch}`}>
+                    <a class:list={['btn', k.kind === 'live' && j === 0 ? 'btn-primary' : null]} href={url} data-href>
+                      Download for {a.label}
+                    </a>
                     <p class="meta">
-                      <span data-size>{approx.installer}</span>
+                      <span data-size>{approx[k.kind]}</span>
                       <a href={`${url}.sha256`} data-sha>SHA-256</a>
                       <span class:list={['tested', !a.tested && 'untested']} data-tested>
                         {a.tested ? 'Booted and installed in CI' : 'Built in CI, not boot-tested yet'}
                       </span>
                     </p>
+                    <p class="name"><code>{file(d.desktop, k.kind, a.arch)}</code></p>
                   </li>
                 );
               })}
             </ul>
-          )}
-        </article>
-      ))}
-    </div>
+          </article>
+        ))}
+      </section>
+    ))}
     <div class="wrap">
       <p class="note muted">
-        Both boot with UEFI only, no legacy BIOS. In a VM, give AgentUX at least 4 GB of RAM; 8 GB is comfortable. The aarch64
-        ISOs target UEFI machines Fedora supports (SystemReady hardware, VMs on Apple silicon or Ampere hosts); boards that
-        need their own firmware or kernel are not covered.
+        Every ISO is named <code>agentux-&lt;desktop&gt;-&lt;live|installer&gt;-&lt;version&gt;-&lt;arch&gt;.iso</code>
+        (here without the version: these links always give the newest release). The x86_64 ISOs boot with UEFI or
+        legacy BIOS; the aarch64 ones with UEFI and target machines Fedora supports (SystemReady hardware, VMs on Apple
+        silicon or Ampere hosts); boards that need their own firmware or kernel are not covered. In a VM, give AgentUX at
+        least 4 GB of RAM; 8 GB is comfortable.
       </p>
     </div>
   </section>
@@ -214,17 +162,17 @@ const kinds: { kind: Kind; title: string; id: string; body: string[] }[] = [
       </div>
       <div class="steps-col">
         <h3>1. Check the checksum</h3>
-        <pre><code>curl -LO {dl}/iso/stable/agentux-live-x86_64.iso.sha256
-sha256sum --check agentux-live-x86_64.iso.sha256</code></pre>
+        <pre><code>curl -LO {dl}/iso/stable/agentux-plasma-live-x86_64.iso.sha256
+sha256sum --check agentux-plasma-live-x86_64.iso.sha256</code></pre>
         <h3>2. Check that the checksum is signed</h3>
-        <pre><code>curl -LO {dl}/iso/stable/agentux-live-x86_64.iso.sha256.sigstore.json
+        <pre><code>curl -LO {dl}/iso/stable/agentux-plasma-live-x86_64.iso.sha256.sigstore.json
 curl -LO https://raw.githubusercontent.com/agentux-os/agentux-os/main/files/etc/pki/containers/agentux-os.pub
 cosign verify-blob --key agentux-os.pub \
-  --bundle agentux-live-x86_64.iso.sha256.sigstore.json \
-  agentux-live-x86_64.iso.sha256</code></pre>
+  --bundle agentux-plasma-live-x86_64.iso.sha256.sigstore.json \
+  agentux-plasma-live-x86_64.iso.sha256</code></pre>
         <h3>3. Write it to a USB stick</h3>
         <pre><code><span class="c"># replace /dev/sdX with the stick; everything on it is erased</span>
-sudo dd if=agentux-live-x86_64.iso of=/dev/sdX bs=4M status=progress oflag=sync</code></pre>
+sudo dd if=agentux-plasma-live-x86_64.iso of=/dev/sdX bs=4M status=progress oflag=sync</code></pre>
         <p class="muted small">
           Use the same names with the ISO you downloaded. A release directory also has a combined, signed
           <code>SHA256SUMS</code>; see <a href={`${gh}/agentux-os#downloads`}>Downloads</a> in agentux-os.
@@ -276,11 +224,14 @@ sudo dd if=agentux-live-x86_64.iso of=/dev/sdX bs=4M status=progress oflag=sync<
         </p>
       </div>
       <div class="steps-col">
-        <h3>KDE Plasma (the default)</h3>
+        <h3>KDE Plasma</h3>
         <pre><code>sudo bootc switch ghcr.io/agentux-os/agentux:stable
 systemctl reboot</code></pre>
+        <h3>COSMIC</h3>
+        <pre><code>sudo bootc switch ghcr.io/agentux-os/agentux-cosmic:stable
+systemctl reboot</code></pre>
         <p class="muted small">
-          On the retired Hyprland image (<code>agentux-hyprland</code>, last released in v0.5.9)? The same command moves
+          On the retired Hyprland image (<code>agentux-hyprland</code>, last released in v0.5.9)? The Plasma command moves
           you to Plasma, keeping your home and settings. Use <code>:latest</code> instead of
           <code>:stable</code> for nightly builds. If an update breaks something, <code>sudo bootc rollback</code> (or the
           previous entry in the boot menu) brings back the image you had.
@@ -329,8 +280,7 @@ cosign verify ghcr.io/agentux-os/agentux:stable \
         clearTimeout(timer);
         if (!data || !Array.isArray(data.isos)) return;
         data.isos.forEach(function (iso) {
-          if (iso.variant && iso.variant !== 'plasma') return;
-          var li = document.querySelector('[data-iso="' + iso.kind + '-' + iso.arch + '"]');
+          var li = document.querySelector('[data-iso="' + (iso.variant || 'plasma') + '-' + iso.kind + '-' + iso.arch + '"]');
           if (!li) return;
           var url = iso.stable_url || iso.url;
           if (url) li.querySelector('[data-href]').href = url;
@@ -367,7 +317,7 @@ cosign verify ghcr.io/agentux-os/agentux:stable \
 
 <script is:inline>
   (() => {
-    const tabs = Array.from(document.querySelectorAll('[data-live-tab]'));
+    const tabs = Array.from(document.querySelectorAll('[data-desktop-tab]'));
     if (!tabs.length) return;
 
     const selectTab = (selectedTab) => {
@@ -459,64 +409,47 @@ cosign verify ghcr.io/agentux-os/agentux:stable \
   .iso > p + p {
     margin-top: 0.75rem;
   }
-  .live-tabs {
+  .desktop-tabs {
     display: flex;
     gap: 0.35rem;
-    margin-top: 1.4rem;
+    margin-bottom: 1.5rem;
     border-bottom: 1px solid var(--line-strong);
   }
 
-  .live-tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
+  .desktop-tab {
     margin-bottom: -1px;
-    padding: 0.7rem 0.85rem;
+    padding: 0.75rem 1rem;
     border: 0;
     border-bottom: 2px solid transparent;
     background: transparent;
     color: var(--muted);
     font: inherit;
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     font-weight: 600;
     cursor: pointer;
   }
 
-  .live-tab[aria-selected='true'] {
+  .desktop-tab[aria-selected='true'] {
     color: var(--text);
     border-bottom-color: var(--accent);
   }
 
-  .live-panel {
-    padding-top: 1rem;
+  .desktop-panel[hidden] {
+    display: none;
   }
 
-  .variant-summary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 0.35rem 1rem;
-    font-weight: 600;
-  }
-
-  .variant-summary > span:not(.experimental) {
+  .iso h2 .kind {
+    display: block;
     color: var(--muted);
-    font-size: 0.85rem;
-    font-weight: 400;
+    font-size: 1rem;
+    font-weight: 500;
   }
 
-  .tab-badge,
-  .experimental {
-    color: var(--warn);
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-  }
-
-  .cosmic-note {
-    margin-top: 0.65rem;
+  .name {
+    margin-top: 0.35rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    overflow-wrap: anywhere;
   }
 
   .files {
