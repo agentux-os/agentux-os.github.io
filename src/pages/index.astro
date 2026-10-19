@@ -253,7 +253,7 @@ pipeline:
           <div>
             <dt>The OS</dt>
             <dd>
-              Fedora Kinoite 44 built with bootc: KDE Plasma, or the lighter COSMIC desktop in an experimental second image. Immutable, with
+              Fedora Atomic 44 built with bootc, in two released images: KDE Plasma, or the lighter COSMIC desktop. Immutable, with
               atomic updates and rollback, and every image signed with cosign.
               <a href={adr('0010-image-variants-and-system-identity.md')}>ADR 0010</a>
             </dd>
@@ -278,7 +278,7 @@ pipeline:
           <ul class="checks yes">
             <li>Both variants build and pass a first-login smoke test on amd64 and arm64.</li>
             <li>The Plasma image boots nightly under QEMU/KVM on x86_64 and takes a fake-agent run to a pull request.</li>
-            <li>The x86_64 live and installer ISOs are installed in a VM before they are published.</li>
+            <li>The x86_64 live and installer ISOs of both desktops are installed in a VM, with UEFI and BIOS, before they are published.</li>
             <li>Image signatures are checked against the policy installed systems enforce.</li>
           </ul>
         </div>
